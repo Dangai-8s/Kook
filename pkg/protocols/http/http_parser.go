@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"net/http"
 
-	pb "github.com/dangai-8s/kook/api/v1/kook"
-	types "github.com/dangai-8s/kook/pkg/ebpf/types"
+	pb "github.com/dangai-8s/kook/api/v1"
+	types "github.com/dangai-8s/kook/pkg/ebpf"
 	"github.com/dangai-8s/kook/pkg/protocols"
 )
 
@@ -18,7 +18,7 @@ type HTTPRequest struct {
 var _ protocols.ProtoRequest = &HTTPRequest{}
 
 // ProtoType implements ProtoRequest
-func (*HTTPRequest) ProtoType() types.ProtocolType { return types.HTTP1 }
+func (*HTTPRequest) ProtoType() types.ProtocolType { return types.HTTP }
 
 // Protobuf implements ProtoRequest
 func (r *HTTPRequest) Protobuf() *pb.Request {
@@ -47,17 +47,17 @@ func toProtobufHeader(header http.Header) []*pb.HTTPHeader {
 	return res
 }
 
-type HTTP1Response struct {
+type HTTPResponse struct {
 	Record *http.Response
 }
 
-var _ protocols.ProtoResponse = &HTTP1Response{}
+var _ protocols.ProtoResponse = &HTTPResponse{}
 
 // ProtoType implements ProtoResponse
-func (*HTTP1Response) ProtoType() types.ProtocolType { return types.HTTP1 }
+func (*HTTPResponse) ProtoType() types.ProtocolType { return types.HTTP }
 
 // Protobuf implements ProtoResponse
-func (r *HTTP1Response) Protobuf() *pb.Response {
+func (r *HTTPResponse) Protobuf() *pb.Response {
 	return &pb.Response{
 		Record: &pb.Response_Http{
 			Http: &pb.HTTPResponse{
@@ -71,27 +71,27 @@ func (r *HTTP1Response) Protobuf() *pb.Response {
 
 const h1ReaderBufSize = 4096
 
-type HTTP1Parser struct {
+type HTTPParser struct {
 	reqReader  *bufio.Reader
 	respReader *bufio.Reader
 }
 
-func NewHTTP1Parser() *HTTP1Parser {
-	return &HTTP1Parser{
+func NewHTTPParser() *HTTPParser {
+	return &HTTPParser{
 		reqReader:  bufio.NewReaderSize(nil, h1ReaderBufSize),
 		respReader: bufio.NewReaderSize(nil, h1ReaderBufSize),
 	}
 }
 
-var _ protocols.ProtoParser = &HTTP1Parser{}
+var _ protocols.ProtoParser = &HTTPParser{}
 
 // GetProtoType implements ProtoParser
-func (p *HTTP1Parser) ProtoType() types.ProtocolType {
-	return types.HTTP1
+func (p *HTTPParser) ProtoType() types.ProtocolType {
+	return types.HTTP
 }
 
 // ParseRequest implements ProtoParser
-func (p *HTTP1Parser) ParseRequest(_ *types.SockKey, msg []byte) ([]protocols.ProtoRequest, error) {
+func (p *HTTPParser) ParseRequest(_ *types.SockKey, msg []byte) ([]protocols.ProtoRequest, error) {
 	r := p.reqReader
 	br := bytes.NewReader(msg)
 	r.Reset(br)
@@ -126,12 +126,12 @@ func validMethod(req *http.Request) bool {
 	}
 }
 
-func (p *HTTP1Parser) EnableInferRequest() bool {
+func (p *HTTPParser) EnableInferRequest() bool {
 	return true
 }
 
 // ParseResponse implements ProtoParser
-func (p *HTTP1Parser) ParseResponse(_ *types.SockKey, msg []byte) ([]protocols.ProtoResponse, error) {
+func (p *HTTPParser) ParseResponse(_ *types.SockKey, msg []byte) ([]protocols.ProtoResponse, error) {
 	r := p.respReader
 	br := bytes.NewReader(msg)
 	r.Reset(br)
@@ -142,9 +142,9 @@ func (p *HTTP1Parser) ParseResponse(_ *types.SockKey, msg []byte) ([]protocols.P
 	}
 	resp.Body.Close()
 
-	return []protocols.ProtoResponse{&HTTP1Response{Record: resp}}, nil
+	return []protocols.ProtoResponse{&HTTPResponse{Record: resp}}, nil
 }
 
-func (p *HTTP1Parser) EnableInferResponse() bool {
+func (p *HTTPParser) EnableInferResponse() bool {
 	return true
 }

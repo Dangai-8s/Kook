@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	types "github.com/dangai-8s/kook/pkg/ebpf/types"
+	types "github.com/dangai-8s/kook/pkg/ebpf"
 	"github.com/dangai-8s/kook/pkg/protocols"
 	"golang.org/x/net/http2"
 )
@@ -20,8 +20,8 @@ func TestHTTPRequestRecord_ProtoType(t *testing.T) {
 		want types.ProtocolType
 	}{
 		{
-			name: "HTTP1 Request Record Protocol Type",
-			want: types.HTTP1,
+			name: "HTTP Request Record Protocol Type",
+			want: types.HTTP,
 		},
 	}
 	for _, tt := range tests {
@@ -34,53 +34,53 @@ func TestHTTPRequestRecord_ProtoType(t *testing.T) {
 	}
 }
 
-func TestHTTP1ResponseRecord_ProtoType(t *testing.T) {
+func TestHTTPResponseRecord_ProtoType(t *testing.T) {
 	tests := []struct {
 		name string
 		want types.ProtocolType
 	}{
 		{
-			name: "HTTP1 Response Record Protocol Type",
-			want: types.HTTP1,
+			name: "HTTP Response Record Protocol Type",
+			want: types.HTTP,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			h := &HTTP1Response{}
+			h := &HTTPResponse{}
 			if got := h.ProtoType(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("HTTP1ResponseRecord.ProtoType() = %v, want %v", got, tt.want)
+				t.Errorf("HTTPResponseRecord.ProtoType() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestHTTP1Parser_ProtoType(t *testing.T) {
+func TestHTTPParser_ProtoType(t *testing.T) {
 	tests := []struct {
 		name string
 		want types.ProtocolType
 	}{
 		{
-			name: "HTTP1 Parser Protocol Type",
-			want: types.HTTP1,
+			name: "HTTP Parser Protocol Type",
+			want: types.HTTP,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := NewHTTP1Parser()
+			p := NewHTTPParser()
 			if got := p.ProtoType(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("HTTP1Parser.GetProtoType() = %v, want %v", got, tt.want)
+				t.Errorf("HTTPParser.GetProtoType() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-type http1Parser_ParseRequest_Test struct {
+type HTTPParser_ParseRequest_Test struct {
 	name    string
 	req     *http.Request
 	wantErr bool
 }
 
-func (t *http1Parser_ParseRequest_Test) args() []byte {
+func (t *HTTPParser_ParseRequest_Test) args() []byte {
 	buf := bytes.NewBuffer(make([]byte, 0, 4096))
 	t.req.Write(buf)
 
@@ -91,11 +91,11 @@ func (t *http1Parser_ParseRequest_Test) args() []byte {
 	return buf.Bytes()[:len]
 }
 
-func (t *http1Parser_ParseRequest_Test) want() protocols.ProtoRequest {
+func (t *HTTPParser_ParseRequest_Test) want() protocols.ProtoRequest {
 	return &HTTPRequest{Record: t.req}
 }
 
-func (t *http1Parser_ParseRequest_Test) equal(got protocols.ProtoRequest) bool {
+func (t *HTTPParser_ParseRequest_Test) equal(got protocols.ProtoRequest) bool {
 	h1rr, ok := got.(*HTTPRequest)
 	if !ok {
 		return false
@@ -108,12 +108,12 @@ func (t *http1Parser_ParseRequest_Test) equal(got protocols.ProtoRequest) bool {
 	return bytes.Equal(wantBytes, gotBytes)
 }
 
-func TestHTTP1Parser_ParseRequest(t *testing.T) {
-	tests := []http1Parser_ParseRequest_Test{
+func TestHTTPParser_ParseRequest(t *testing.T) {
+	tests := []HTTPParser_ParseRequest_Test{
 		{
 			name: "Short Header Get Request",
 			req: func() *http.Request {
-				req, _ := http.NewRequest(http.MethodGet, "http://perisco.org/test/url", nil)
+				req, _ := http.NewRequest(http.MethodGet, "http://keploy.io/test/url", nil)
 				req.Header.Add("User-Agent", "test-clinet/1.1")
 				return req
 			}(),
@@ -122,7 +122,7 @@ func TestHTTP1Parser_ParseRequest(t *testing.T) {
 		{
 			name: "Long Header Get Request",
 			req: func() *http.Request {
-				req, _ := http.NewRequest(http.MethodGet, "http://perisco.org/test/url", nil)
+				req, _ := http.NewRequest(http.MethodGet, "http://keploy.io/test/url", nil)
 				req.Header.Add("User-Agent", "test-clinet/1.1")
 				req.Header.Add("Long-Cookie", strings.Repeat("1234567890", 500))
 				return req
@@ -133,7 +133,7 @@ func TestHTTP1Parser_ParseRequest(t *testing.T) {
 			name: "Short Header Short Body Post Request",
 			req: func() *http.Request {
 				body := bytes.NewReader([]byte(strings.Repeat("1234567890", 10)))
-				req, _ := http.NewRequest(http.MethodPost, "http://perisco.org/test/url", body)
+				req, _ := http.NewRequest(http.MethodPost, "http://keploy.io/test/url", body)
 				req.Header.Add("User-Agent", "test-clinet/1.1")
 				return req
 			}(),
@@ -143,7 +143,7 @@ func TestHTTP1Parser_ParseRequest(t *testing.T) {
 			name: "Short Header Long Body Post Request",
 			req: func() *http.Request {
 				body := bytes.NewReader([]byte(strings.Repeat("1234567890", 500)))
-				req, _ := http.NewRequest(http.MethodPost, "http://perisco.org/test/url", body)
+				req, _ := http.NewRequest(http.MethodPost, "http://keploy.io/test/url", body)
 				req.Header.Add("User-Agent", "test-clinet/1.1")
 				return req
 			}(),
@@ -153,7 +153,7 @@ func TestHTTP1Parser_ParseRequest(t *testing.T) {
 			name: "Long Header Long Body Post Request",
 			req: func() *http.Request {
 				body := bytes.NewReader([]byte(strings.Repeat("1234567890", 500)))
-				req, _ := http.NewRequest(http.MethodPost, "http://perisco.org/test/url", body)
+				req, _ := http.NewRequest(http.MethodPost, "http://keploy.io/test/url", body)
 				req.Header.Add("User-Agent", "test-clinet/1.1")
 				req.Header.Add("Long-Cookie", strings.Repeat("1234567890", 500))
 				return req
@@ -171,18 +171,18 @@ func TestHTTP1Parser_ParseRequest(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := NewHTTP1Parser()
+			p := NewHTTPParser()
 
 			got, err := p.ParseRequest(nil, tt.args())
 			if (err != nil) != tt.wantErr {
-				t.Errorf("HTTP1Parser.ParseRequest() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("HTTPParser.ParseRequest() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if tt.wantErr {
 				return
 			}
 			if !tt.equal(got[0]) {
-				t.Errorf("HTTP1Parser.ParseRequest() = %v, want %v", got, tt.want())
+				t.Errorf("HTTPParser.ParseRequest() = %v, want %v", got, tt.want())
 			}
 		})
 	}
@@ -260,13 +260,13 @@ func Test_validMethod(t *testing.T) {
 	}
 }
 
-type http1Parser_ParseResponse_Test struct {
+type HTTPParser_ParseResponse_Test struct {
 	name    string
 	resp    *http.Response
 	wantErr bool
 }
 
-func (t *http1Parser_ParseResponse_Test) args() []byte {
+func (t *HTTPParser_ParseResponse_Test) args() []byte {
 	buf := bytes.NewBuffer(make([]byte, 0, 4096))
 	t.resp.Write(buf)
 
@@ -277,12 +277,12 @@ func (t *http1Parser_ParseResponse_Test) args() []byte {
 	return buf.Bytes()[:len]
 }
 
-func (t *http1Parser_ParseResponse_Test) want() protocols.ProtoResponse {
-	return &HTTP1Response{Record: t.resp}
+func (t *HTTPParser_ParseResponse_Test) want() protocols.ProtoResponse {
+	return &HTTPResponse{Record: t.resp}
 }
 
-func (t *http1Parser_ParseResponse_Test) equal(got protocols.ProtoResponse) bool {
-	h1rr, ok := got.(*HTTP1Response)
+func (t *HTTPParser_ParseResponse_Test) equal(got protocols.ProtoResponse) bool {
+	h1rr, ok := got.(*HTTPResponse)
 	if !ok {
 		return false
 	}
@@ -294,8 +294,8 @@ func (t *http1Parser_ParseResponse_Test) equal(got protocols.ProtoResponse) bool
 	return bytes.Equal(wantBytes, gotBytes)
 }
 
-func TestHTTP1Parser_ParseResponse(t *testing.T) {
-	tests := []http1Parser_ParseResponse_Test{
+func TestHTTPParser_ParseResponse(t *testing.T) {
+	tests := []HTTPParser_ParseResponse_Test{
 		{
 			name: "Short Header Short Body",
 			resp: func() *http.Response {
@@ -340,18 +340,18 @@ func TestHTTP1Parser_ParseResponse(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := NewHTTP1Parser()
+			p := NewHTTPParser()
 
 			got, err := p.ParseResponse(nil, tt.args())
 			if (err != nil) != tt.wantErr {
-				t.Errorf("HTTP1Parser.ParseResponse() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("HTTPParser.ParseResponse() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if tt.wantErr {
 				return
 			}
 			if !tt.equal(got[0]) {
-				t.Errorf("HTTP1Parser.ParseResponse() = %v, want %v", got, tt.want())
+				t.Errorf("HTTPParser.ParseResponse() = %v, want %v", got, tt.want())
 			}
 		})
 	}

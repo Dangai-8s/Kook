@@ -3,8 +3,8 @@ package protocols
 import (
 	"time"
 
-	pb "github.com/dangai-8s/kook/api/v1/kook"
-	types "github.com/dangai-8s/kook/pkg/ebpf/types"
+	pb "github.com/dangai-8s/kook/api/v1"
+	types "github.com/dangai-8s/kook/pkg/ebpf"
 	tspb "google.golang.org/protobuf/types/known/timestamppb"
 )
 

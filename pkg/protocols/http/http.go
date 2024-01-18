@@ -3,7 +3,7 @@ package http
 import (
 	"container/list"
 
-	pb "github.com/dangai-8s/kook/api/v1/kook"
+	pb "github.com/dangai-8s/kook/api/v1"
 	"github.com/dangai-8s/kook/pkg/protocols"
 )
 

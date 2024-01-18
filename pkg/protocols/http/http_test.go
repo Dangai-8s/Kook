@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	types "github.com/dangai-8s/kook/pkg/ebpf/types"
+	types "github.com/dangai-8s/kook/pkg/ebpf"
 	"github.com/dangai-8s/kook/pkg/protocols"
 )
 
@@ -38,7 +38,7 @@ func TestHTTPMatcher_MatchRequest(t *testing.T) {
 					l := list.New()
 					l.PushFront(&protocols.Response{
 						SockKey: types.SockKey{Pid: 1},
-						Record:  &HTTP1Response{&http.Response{}},
+						Record:  &HTTPResponse{&http.Response{}},
 					})
 					return l
 				}(),
@@ -73,7 +73,7 @@ func TestHTTPMatcher_MatchRequest(t *testing.T) {
 					l := list.New()
 					l.PushFront(&protocols.Response{
 						SockKey: types.SockKey{Pid: 2},
-						Record:  &HTTP1Response{&http.Response{}},
+						Record:  &HTTPResponse{&http.Response{}},
 					})
 					return l
 				}(),
@@ -141,7 +141,7 @@ func TestHTTPMatcher_MatchResponse(t *testing.T) {
 			args: args{
 				resp: &protocols.Response{
 					SockKey: types.SockKey{Pid: 1},
-					Record:  &HTTP1Response{&http.Response{}},
+					Record:  &HTTPResponse{&http.Response{}},
 				},
 			},
 			fields: fields{
@@ -162,7 +162,7 @@ func TestHTTPMatcher_MatchResponse(t *testing.T) {
 			args: args{
 				resp: &protocols.Response{
 					SockKey: types.SockKey{Pid: 1},
-					Record:  &HTTP1Response{&http.Response{}},
+					Record:  &HTTPResponse{&http.Response{}},
 				},
 			},
 			fields: fields{
@@ -176,7 +176,7 @@ func TestHTTPMatcher_MatchResponse(t *testing.T) {
 			args: args{
 				resp: &protocols.Response{
 					SockKey: types.SockKey{Pid: 1},
-					Record:  &HTTP1Response{&http.Response{}},
+					Record:  &HTTPResponse{&http.Response{}},
 				},
 			},
 			fields: fields{
